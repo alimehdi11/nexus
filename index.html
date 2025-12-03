@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nexus | Premium Audio Experience</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+* { font-family: 'Poppins', sans-serif; }
+#playerContainer { width:1px; height:1px; overflow:hidden; position:absolute; left:-9999px; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff0080, #00ccff); border-radius: 10px; }
+
+/* Glowing effects */
+.glow { box-shadow: 0 0 20px rgba(255, 0, 128, 0.5); }
+.glow-blue { box-shadow: 0 0 20px rgba(0, 204, 255, 0.5); }
+
+/* Animated gradient background */
+body {
+  background: linear-gradient(-45deg, #0a0a0f, #14142e, #1a1a2e, #16213e);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Custom range sliders */
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #ff0080, #00ccff);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 10px rgba(255,0,128,0.7);
+}
+
+/* Neon text */
+.neon-text {
+  text-shadow: 0 0 10px #00ccff, 0 0 20px #00ccff;
+}
+
+/* Pulse animation for playing */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.playing-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Modern glass effect */
+.glass {
+  background: rgba(20, 20, 40, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center text-white p-4">
+<div class="w-full max-w-2xl fade-in">
+  <!-- Main Player Card -->
+  <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+    
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center p-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-600 to-blue-500 flex items-center justify-center playing-pulse">
+          <i class="fas fa-music text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold neon-text">NEXUS</h1>
+          <p class="text-sm text-gray-300">Premium Audio Player</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="text-right">
+          <div class="text-sm text-gray-300">Crossfade</div>
+          <div class="text-lg font-bold text-cyan-300">8s</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="p-6">
+      <!-- Album Art Section -->
+      <div class="relative mb-8">
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-600/20 to-blue-500/20 blur-3xl rounded-3xl"></div>
+        <img id="thumb" class="w-full h-80 object-cover rounded-2xl shadow-2xl relative border-4 border-white/10">
+        <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pink-600 to-blue-500 px-6 py-2 rounded-full font-bold shadow-lg">
+          NOW PLAYING
+        </div>
+      </div>
+      
+      <!-- Song Info -->
+      <div class="text-center mb-8">
+        <h2 id="title" class="text-3xl font-bold mb-2">Select a Song</h2>
+        <div class="flex justify-center items-center gap-4 text-gray-300">
+          <span id="songTime">0:00</span>
+          <div class="w-2 h-2 bg-cyan-400 rounded-full"></div>
+          <span>YouTube Audio</span>
+          <div class="w-2 h-2 bg-cyan-400 rounded-full"></div>
+          <span id="songDuration">0:00</span>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="mb-8">
+        <input id="progress" type="range" class="w-full" style="height: 8px;">
+      </div>
+      
+      <!-- Controls -->
+      <div class="flex justify-center items-center gap-6 mb-8">
+        <button onclick="toggleShuffle()" id="shuffleBtn" class="w-14 h-14 rounded-full glass flex items-center justify-center hover:bg-purple-900/30 transition-all">
+          <i class="fas fa-random text-xl"></i>
+        </button>
+        
+        <button onclick="prevSong()" class="w-16 h-16 rounded-full glass flex items-center justify-center hover:bg-pink-900/30 transition-all">
+          <i class="fas fa-step-backward text-2xl"></i>
+        </button>
+        
+        <button id="playBtn" onclick="play()" class="w-20 h-20 rounded-full bg-gradient-to-r from-pink-600 to-blue-500 flex items-center justify-center glow hover:from-pink-700 hover:to-blue-600 transition-all">
+          <i class="fas fa-play text-3xl"></i>
+        </button>
+        
+        <button onclick="pause()" class="w-16 h-16 rounded-full glass flex items-center justify-center hover:bg-blue-900/30 transition-all">
+          <i class="fas fa-pause text-2xl"></i>
+        </button>
+        
+        <button onclick="nextSong()" class="w-16 h-16 rounded-full glass flex items-center justify-center hover:bg-pink-900/30 transition-all">
+          <i class="fas fa-step-forward text-2xl"></i>
+        </button>
+        
+        <button onclick="toggleRepeat()" id="repeatBtn" class="w-14 h-14 rounded-full glass flex items-center justify-center hover:bg-blue-900/30 transition-all">
+          <i class="fas fa-redo text-xl"></i>
+        </button>
+      </div>
+      
+      <!-- Volume & Crossfade -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="glass p-4 rounded-2xl">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-volume-up text-cyan-400"></i>
+              <span class="font-medium">Volume</span>
+            </div>
+            <span id="volumeValue" class="font-bold text-cyan-300">100%</span>
+          </div>
+          <input id="volume" type="range" min="0" max="100" value="100" class="w-full">
+        </div>
+        
+        <div class="glass p-4 rounded-2xl">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-exchange-alt text-pink-400"></i>
+              <span class="font-medium">Crossfade</span>
+            </div>
+            <span id="crossfadeValue" class="font-bold text-pink-300">ON</span>
+          </div>
+          <input id="crossfadeSlider" type="range" min="0" max="15" value="8" class="w-full">
+        </div>
+      </div>
+      
+      <!-- Add Song Section -->
+      <div class="glass p-4 rounded-2xl mb-8">
+        <div class="flex gap-3">
+          <input id="url" class="flex-1 p-4 rounded-xl bg-black/30 border border-white/10 focus:outline-none focus:border-cyan-500 transition-all" placeholder="Paste YouTube URL here...">
+          <button onclick="addSong()" class="px-6 rounded-xl bg-gradient-to-r from-pink-600 to-blue-500 font-bold hover:from-pink-700 hover:to-blue-600 transition-all flex items-center gap-2">
+            <i class="fas fa-plus"></i> ADD
+          </button>
+        </div>
+      </div>
+      
+      <!-- Playlist -->
+      <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-4 bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-b border-white/10">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+              <i class="fas fa-list-music"></i> PLAYLIST
+            </h3>
+            <span id="playlistCount" class="bg-gradient-to-r from-pink-600 to-blue-500 px-3 py-1 rounded-full text-sm font-bold">0 songs</span>
+          </div>
+        </div>
+        
+        <div class="p-4 max-h-72 overflow-y-auto">
+          <ul id="playlist" class="space-y-3">
+            <!-- Songs will be added here -->
+            <li class="text-center py-8 text-gray-400">
+              <i class="fas fa-music text-4xl mb-4 opacity-30"></i>
+              <p>Your playlist is empty</p>
+              <p class="text-sm mt-2">Add songs using the field above</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Player Status -->
+      <div class="mt-6 text-center text-sm text-gray-400">
+        <span id="playerStatus">Ready • Crossfade: ON (8s) • Volume: 100%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="playerContainer"><div id="ytplayer"></div></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+let player;
+let playlist = JSON.parse(localStorage.getItem("playlist") || "[]");
+let current = 0;
+let shuffle = false;
+let repeat = false;
+let crossfade = true;
+let crossfadeTime = 8;
+let crossfadeMonitor = null;
+let isPlaying = false;
+
+// Initialize UI
+updatePlaylistCount();
+updatePlayerStatus();
+
+function extractID(url){
+  const m = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function onYouTubeIframeAPIReady(){
+  if(playlist.length) loadSong(0);
+}
+
+function addSong(){
+  const id = extractID(url.value);
+  if(!id) return showNotification("Invalid YouTube URL", "error");
+
+  // Check for duplicates
+  if(playlist.some(song => song.id === id)) {
+    showNotification("Song already in playlist", "warning");
+    return;
+  }
+  
+  playlist.push({id});
+  localStorage.setItem("playlist", JSON.stringify(playlist));
+  url.value="";
+  render();
+  updatePlaylistCount();
+  
+  if(playlist.length===1) loadSong(0);
+  
+  showNotification("Song added to playlist", "success");
+}
+
+function render(){
+  const playlistEl = document.getElementById("playlist");
+  
+  if(playlist.length === 0) {
+    playlistEl.innerHTML = `
+      <li class="text-center py-8 text-gray-400">
+        <i class="fas fa-music text-4xl mb-4 opacity-30"></i>
+        <p>Your playlist is empty</p>
+        <p class="text-sm mt-2">Add songs using the field above</p>
+      </li>
+    `;
+    return;
+  }
+  
+  playlistEl.innerHTML = "";
+  playlist.forEach((s,i)=>{
+    const isCurrent = i === current;
+    playlistEl.innerHTML += `
+      <li class="flex items-center p-4 rounded-xl transition-all ${isCurrent ? 'bg-gradient-to-r from-pink-900/30 to-blue-900/30 border border-cyan-500/30' : 'hover:bg-white/5'}">
+        <div class="flex items-center gap-4 flex-1">
+          <div class="relative">
+            <div class="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-pink-900/30 to-blue-900/30 flex items-center justify-center">
+              ${isCurrent ? 
+                '<div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>' : 
+                `<span class="font-bold">${i+1}</span>`}
+            </div>
+            ${isCurrent ? '<div class="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-pink-600 to-blue-500 rounded-full"></div>' : ''}
+          </div>
+          <div class="flex-1">
+            <div class="font-medium ${isCurrent ? 'text-cyan-300' : 'text-white'}">Song ${i+1}</div>
+            <div class="text-xs text-gray-400">YouTube • ${isCurrent ? 'Now Playing' : 'Ready'}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="loadSong(${i})" class="w-10 h-10 rounded-full ${isCurrent ? 'bg-gradient-to-r from-pink-600 to-blue-500' : 'glass'} hover:bg-cyan-900/30 transition-all flex items-center justify-center">
+            <i class="fas ${isCurrent ? 'fa-pause' : 'fa-play'}"></i>
+          </button>
+          <button onclick="removeSong(${i})" class="w-10 h-10 rounded-full glass hover:bg-pink-900/30 transition-all flex items-center justify-center">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </li>
+    `;
+  });
+}
+
+function removeSong(i){
+  playlist.splice(i,1);
+  localStorage.setItem("playlist",JSON.stringify(playlist));
+  render();
+  updatePlaylistCount();
+  
+  if(i === current && playlist.length > 0) {
+    current = Math.min(current, playlist.length - 1);
+    loadSong(current);
+  } else if(playlist.length === 0) {
+    document.getElementById("title").innerText = "Select a Song";
+    document.getElementById("thumb").src = "";
+    document.getElementById("playBtn").innerHTML = '<i class="fas fa-play text-3xl"></i>';
+    document.getElementById("playerStatus").innerText = "Ready • Playlist empty";
+  }
+}
+
+function loadSong(i){
+  if(!playlist.length) return;
+  current = i;
+  const id = playlist[i].id;
+  
+  // Update thumbnail
+  document.getElementById("thumb").src = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+  document.getElementById("thumb").onerror = function() {
+    this.src = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+  };
+  
+  document.getElementById("title").innerText = `Song ${i+1}`;
+  document.getElementById("playBtn").innerHTML = '<i class="fas fa-pause text-3xl"></i>';
+  
+  if(!player){
+    player = new YT.Player("ytplayer", {
+      videoId: id,
+      height: "1",
+      width: "1",
+      playerVars: { controls: 0, fs: 0, modestbranding: 1 },
+      events: {
+        onReady: e => {
+          e.target.setVolume(volume.value);
+          play();
+          updateSongDuration();
+          setInterval(updateSeek, 500);
+          startCrossfadeWatcher();
+          updatePlayerStatus();
+          showNotification("Player ready", "success");
+        },
+        onStateChange: e => {
+          if(e.data === 0) {
+            if(repeat) {
+              loadSong(current);
+            } else {
+              nextSong();
+            }
+          } else if(e.data === 1) {
+            isPlaying = true;
+            document.getElementById("playBtn").innerHTML = '<i class="fas fa-pause text-3xl"></i>';
+            document.getElementById("playerStatus").innerText = "Playing • Crossfade: ON";
+          } else if(e.data === 2) {
+            isPlaying = false;
+            document.getElementById("playBtn").innerHTML = '<i class="fas fa-play text-3xl"></i>';
+            document.getElementById("playerStatus").innerText = "Paused • Crossfade: ON";
+          }
+        }
+      }
+    });
+  } else {
+    player.loadVideoById(id);
+    play();
+    updateSongDuration();
+    startCrossfadeWatcher();
+  }
+  
+  render();
+  updatePlayerStatus();
+}
+
+function play(){
+  if(!player) return;
+  player.playVideo();
+  isPlaying = true;
+  document.getElementById("playBtn").innerHTML = '<i class="fas fa-pause text-3xl"></i>';
+}
+
+function pause(){
+  if(!player) return;
+  player.pauseVideo();
+  isPlaying = false;
+  document.getElementById("playBtn").innerHTML = '<i class="fas fa-play text-3xl"></i>';
+}
+
+function nextSong(){
+  if(!playlist.length) return;
+  
+  if(shuffle){
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * playlist.length);
+    } while(playlist.length > 1 && newIndex === current);
+    current = newIndex;
+  } else {
+    current = (current + 1) % playlist.length;
+  }
+  loadSong(current);
+}
+
+function prevSong(){
+  if(!playlist.length) return;
+  current = (current - 1 + playlist.length) % playlist.length;
+  loadSong(current);
+}
+
+/* ENHANCED CROSSFADE SYSTEM */
+function startCrossfadeWatcher(){
+  if(crossfadeMonitor) clearInterval(crossfadeMonitor);
+  
+  if(!crossfade || !player) return;
+  
+  crossfadeMonitor = setInterval(() => {
+    if(!player || !crossfade) return;
+    
+    const duration = player.getDuration();
+    const currentTime = player.getCurrentTime();
+    
+    if(duration - currentTime <= crossfadeTime + 0.5) {
+      clearInterval(crossfadeMonitor);
+      smoothFadeOutAndNext();
+    }
+  }, 500);
+}
+
+function smoothFadeOutAndNext(){
+  if(!crossfade || !player) return;
+  
+  let vol = player.getVolume();
+  const steps = 30; // More steps for smoother fade
+  const stepTime = (crossfadeTime * 1000) / steps;
+  const stepSize = vol / steps;
+  
+  const fadeInterval = setInterval(() => {
+    vol -= stepSize;
+    if(vol <= 0) {
+      clearInterval(fadeInterval);
+      player.setVolume(0);
+      
+      if(repeat) {
+        loadSong(current);
+      } else {
+        nextSong();
+      }
+      
+      // Start fade in on new song after short delay
+      setTimeout(smoothFadeIn, 300);
+    } else {
+      player.setVolume(vol);
+    }
+  }, stepTime);
+}
+
+function smoothFadeIn(){
+  if(!player) return;
+  
+  const maxVol = volume.value;
+  const steps = 30;
+  const stepTime = (crossfadeTime * 1000) / steps;
+  const stepSize = maxVol / steps;
+  let vol = 0;
+  
+  player.setVolume(0);
+  
+  const fadeInterval = setInterval(() => {
+    vol += stepSize;
+    if(vol >= maxVol) {
+      clearInterval(fadeInterval);
+      player.setVolume(maxVol);
+    } else {
+      player.setVolume(vol);
+    }
+  }, stepTime);
+}
+
+/* Update song time display */
+function updateSeek(){
+  if(!player || !player.getCurrentTime) return;
+  
+  const currentTime = player.getCurrentTime();
+  const duration = player.getDuration();
+  
+  if(duration > 0) {
+    const progressPercent = (currentTime / duration) * 100;
+    document.getElementById("progress").value = progressPercent || 0;
+    
+    // Update time display
+    document.getElementById("songTime").textContent = formatTime(currentTime);
+    document.getElementById("songDuration").textContent = formatTime(duration);
+  }
+}
+
+function updateSongDuration(){
+  if(!player) return;
+  
+  // Wait a bit for duration to load
+  setTimeout(() => {
+    if(player.getDuration) {
+      const duration = player.getDuration();
+      if(duration > 0) {
+        document.getElementById("songDuration").textContent = formatTime(duration);
+      }
+    }
+  }, 1000);
+}
+
+function formatTime(seconds){
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+/* Event Listeners */
+document.getElementById("progress").oninput = e => {
+  if(!player) return;
+  const t = (e.target.value / 100) * player.getDuration();
+  player.seekTo(t, true);
+};
+
+document.getElementById("volume").oninput = e => {
+  if(player) player.setVolume(e.target.value);
+  document.getElementById("volumeValue").textContent = `${e.target.value}%`;
+  updatePlayerStatus();
+};
+
+// Crossfade slider
+document.getElementById("crossfadeSlider").oninput = e => {
+  crossfadeTime = parseInt(e.target.value);
+  document.getElementById("crossfadeValue").textContent = crossfadeTime + "s";
+  document.querySelector(".text-lg.font-bold.text-cyan-300").textContent = crossfadeTime + "s";
+  updatePlayerStatus();
+  
+  // Update crossfade monitor with new time
+  if(crossfade && player && isPlaying) {
+    startCrossfadeWatcher();
+  }
+};
+
+// Toggle crossfade on/off
+document.getElementById("crossfadeSlider").ondblclick = () => {
+  crossfade = !crossfade;
+  document.getElementById("crossfadeValue").textContent = crossfade ? crossfadeTime + "s" : "OFF";
+  document.querySelector(".text-lg.font-bold.text-cyan-300").textContent = crossfade ? crossfadeTime + "s" : "OFF";
+  
+  if(crossfade && player && isPlaying) {
+    startCrossfadeWatcher();
+    showNotification("Crossfade enabled", "success");
+  } else {
+    if(crossfadeMonitor) clearInterval(crossfadeMonitor);
+    showNotification("Crossfade disabled", "info");
+  }
+  
+  updatePlayerStatus();
+};
+
+function toggleShuffle(){
+  shuffle = !shuffle;
+  const btn = document.getElementById("shuffleBtn");
+  if(shuffle) {
+    btn.classList.add("glow");
+    showNotification("Shuffle enabled", "success");
+  } else {
+    btn.classList.remove("glow");
+    showNotification("Shuffle disabled", "info");
+  }
+  updatePlayerStatus();
+}
+
+function toggleRepeat(){
+  repeat = !repeat;
+  const btn = document.getElementById("repeatBtn");
+  if(repeat) {
+    btn.classList.add("glow-blue");
+    showNotification("Repeat enabled", "success");
+  } else {
+    btn.classList.remove("glow-blue");
+    showNotification("Repeat disabled", "info");
+  }
+  updatePlayerStatus();
+}
+
+function updatePlaylistCount(){
+  const count = playlist.length;
+  document.getElementById("playlistCount").textContent = `${count} ${count === 1 ? 'song' : 'songs'}`;
+}
+
+function updatePlayerStatus(){
+  let status = isPlaying ? "Playing • " : "Ready • ";
+  status += `Crossfade: ${crossfade ? 'ON (' + crossfadeTime + 's)' : 'OFF'} • `;
+  status += `Volume: ${document.getElementById("volume").value}%`;
+  
+  if(shuffle) status += " • Shuffle";
+  if(repeat) status += " • Repeat";
+  
+  document.getElementById("playerStatus").textContent = status;
+}
+
+function showNotification(message, type){
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.className = `fixed top-6 right-6 px-5 py-4 rounded-xl shadow-2xl z-50 fade-in ${type === 'error' ? 'bg-gradient-to-r from-red-900/90 to-pink-900/90' : type === 'warning' ? 'bg-gradient-to-r from-yellow-900/90 to-orange-900/90' : 'bg-gradient-to-r from-green-900/90 to-cyan-900/90'} backdrop-blur-sm border border-white/10`;
+  notification.innerHTML = `
+    <div class="flex items-center gap-3">
+      <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle'} text-xl"></i>
+      <span class="font-medium">${message}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(30px)";
+    setTimeout(() => {
+      if(notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
+// Initialize render
+render();
+</script>
+</body>
+</html>
